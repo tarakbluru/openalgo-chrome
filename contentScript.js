@@ -38,41 +38,58 @@ function injectTradingButtons() {
   // Add draggable functionality
   makeDraggable(container);
   
-  // Create buttons
-  const buttons = [
-    { id: 'le-button', text: 'LE', color: 'success', action: 'longEntry', tooltip: 'Long Entry' },
-    { id: 'lx-button', text: 'LX', color: 'warning', action: 'longExit', tooltip: 'Long Exit' },
-    { id: 'se-button', text: 'SE', color: 'error', action: 'shortEntry', tooltip: 'Short Entry' },
-    { id: 'sx-button', text: 'SX', color: 'info', action: 'shortExit', tooltip: 'Short Exit' }
+  // Create buttons for both symbols
+  const buttonRows = [
+    [
+      { id: 'le1-button', text: 'LE1', color: 'success', action: 'longEntry', symbolNum: 1, tooltip: 'Long Entry - Symbol 1' },
+      { id: 'lx1-button', text: 'LX1', color: 'warning', action: 'longExit', symbolNum: 1, tooltip: 'Long Exit - Symbol 1' },
+      { id: 'se1-button', text: 'SE1', color: 'error', action: 'shortEntry', symbolNum: 1, tooltip: 'Short Entry - Symbol 1' },
+      { id: 'sx1-button', text: 'SX1', color: 'info', action: 'shortExit', symbolNum: 1, tooltip: 'Short Exit - Symbol 1' }
+    ],
+    [
+      { id: 'le2-button', text: 'LE2', color: 'success', action: 'longEntry', symbolNum: 2, tooltip: 'Long Entry - Symbol 2' },
+      { id: 'lx2-button', text: 'LX2', color: 'warning', action: 'longExit', symbolNum: 2, tooltip: 'Long Exit - Symbol 2' },
+      { id: 'se2-button', text: 'SE2', color: 'error', action: 'shortEntry', symbolNum: 2, tooltip: 'Short Entry - Symbol 2' },
+      { id: 'sx2-button', text: 'SX2', color: 'info', action: 'shortExit', symbolNum: 2, tooltip: 'Short Exit - Symbol 2' }
+    ]
   ];
-  
-  // Create buttons container
+
+  // Create buttons container with two rows
   const buttonsContainer = document.createElement('div');
-  buttonsContainer.className = 'openalgo-buttons-row';
-  
-  buttons.forEach(button => {
-    const btn = document.createElement('button');
-    btn.id = button.id;
-    btn.textContent = button.text;
-    btn.className = `openalgo-button btn-${button.color}`;
-    btn.setAttribute('title', button.tooltip);
-    btn.addEventListener('click', () => handleButtonClick(button.action));
-    buttonsContainer.appendChild(btn);
+  buttonsContainer.className = 'openalgo-buttons-container';
+
+  buttonRows.forEach((row, rowIndex) => {
+    const rowDiv = document.createElement('div');
+    rowDiv.className = 'openalgo-buttons-row';
+
+    row.forEach(button => {
+      const btn = document.createElement('button');
+      btn.id = button.id;
+      btn.textContent = button.text;
+      btn.className = `openalgo-button btn-${button.color}`;
+      btn.setAttribute('title', button.tooltip);
+      btn.addEventListener('click', () => handleButtonClick(button.action, button.symbolNum));
+      rowDiv.appendChild(btn);
+    });
+
+    // Add settings icon after SX1 (first row only)
+    if (rowIndex === 0) {
+      const settingsIcon = document.createElement('button');
+      settingsIcon.className = 'openalgo-settings-icon';
+      settingsIcon.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+          <circle cx="8" cy="4" r="1.5"/>
+          <circle cx="8" cy="8" r="1.5"/>
+          <circle cx="8" cy="12" r="1.5"/>
+        </svg>
+      `;
+      settingsIcon.addEventListener('click', toggleSettings);
+      settingsIcon.setAttribute('title', 'OpenAlgo Settings');
+      rowDiv.appendChild(settingsIcon);
+    }
+
+    buttonsContainer.appendChild(rowDiv);
   });
-  
-  // Add settings icon to the buttons container
-  const settingsIcon = document.createElement('button');
-  settingsIcon.className = 'openalgo-settings-icon';
-  settingsIcon.innerHTML = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-      <circle cx="8" cy="4" r="1.5"/>
-      <circle cx="8" cy="8" r="1.5"/>
-      <circle cx="8" cy="12" r="1.5"/>
-    </svg>
-  `;
-  settingsIcon.addEventListener('click', toggleSettings);
-  settingsIcon.setAttribute('title', 'OpenAlgo Settings');
-  buttonsContainer.appendChild(settingsIcon);
   
   // Add the buttons container to the main container
   container.appendChild(buttonsContainer);
@@ -87,8 +104,18 @@ function injectTradingButtons() {
     e.stopPropagation();
   });
   
-  // Load settings from storage
-  chrome.storage.sync.get(['hostUrl', 'apiKey', 'symbol', 'exchange', 'product', 'quantity'], function(settings) {
+  // Load settings from storage (including migration from old format)
+  chrome.storage.sync.get(['hostUrl', 'apiKey', 'symbol', 'quantity', 'symbol1', 'symbol2', 'quantity1', 'quantity2', 'exchange', 'product', 'enabled2'], function(settings) {
+    // Migration: if old format exists, migrate to new format
+    if (settings.symbol && !settings.symbol1) {
+      settings.symbol1 = settings.symbol;
+      settings.quantity1 = settings.quantity;
+      chrome.storage.sync.set({ symbol1: settings.symbol, quantity1: settings.quantity });
+    }
+
+    // Default enabled state for Symbol 2
+    if (settings.enabled2 === undefined) settings.enabled2 = false;
+
     settingsPanel.innerHTML = `
       <div class="card-body p-3">
         <h3 class="card-title text-xs">Settings</h3>
@@ -100,10 +127,6 @@ function injectTradingButtons() {
           <div class="form-group">
             <label for="apiKey">API Key</label>
             <input type="text" id="apiKey" value="${settings.apiKey || ''}" class="input input-bordered input-xs" placeholder="API Key">
-          </div>
-          <div class="form-group">
-            <label for="symbol">Symbol</label>
-            <input type="text" id="symbol" value="${settings.symbol || ''}" class="input input-bordered input-xs" placeholder="Symbol">
           </div>
           <div class="form-group">
             <label for="exchange">Exchange</label>
@@ -124,9 +147,31 @@ function injectTradingButtons() {
               <option value="CNC" ${settings.product === 'CNC' ? 'selected' : ''}>CNC</option>
             </select>
           </div>
+          <hr class="settings-divider">
+          <h4 class="settings-section-title">Symbol 1</h4>
           <div class="form-group">
-            <label for="quantity">Quantity</label>
-            <input type="number" id="quantity" value="${settings.quantity || ''}" class="input input-bordered input-xs" placeholder="Quantity">
+            <label for="symbol1">Symbol 1</label>
+            <input type="text" id="symbol1" value="${settings.symbol1 || ''}" class="input input-bordered input-xs" placeholder="Symbol 1">
+          </div>
+          <div class="form-group">
+            <label for="quantity1">Quantity 1</label>
+            <input type="number" id="quantity1" value="${settings.quantity1 || ''}" class="input input-bordered input-xs" placeholder="Quantity 1">
+          </div>
+          <hr class="settings-divider">
+          <div class="symbol-header">
+            <h4 class="settings-section-title">Symbol 2</h4>
+            <label class="checkbox-label">
+              <input type="checkbox" id="enabled2" ${settings.enabled2 ? 'checked' : ''} class="checkbox-input">
+              <span class="checkbox-text">Enable</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label for="symbol2">Symbol 2</label>
+            <input type="text" id="symbol2" value="${settings.symbol2 || ''}" class="input input-bordered input-xs" placeholder="Symbol 2">
+          </div>
+          <div class="form-group">
+            <label for="quantity2">Quantity 2</label>
+            <input type="number" id="quantity2" value="${settings.quantity2 || ''}" class="input input-bordered input-xs" placeholder="Quantity 2">
           </div>
           <button id="saveSettings" class="btn btn-primary btn-xs w-full mt-2">Save</button>
         </div>
@@ -148,25 +193,33 @@ function injectTradingButtons() {
     // Save settings button handler
     settingsPanel.querySelector('#saveSettings').addEventListener('click', function(e) {
       e.stopPropagation();
-      
+
       const newSettings = {
         hostUrl: settingsPanel.querySelector('#hostUrl').value,
         apiKey: settingsPanel.querySelector('#apiKey').value,
-        symbol: settingsPanel.querySelector('#symbol').value,
         exchange: settingsPanel.querySelector('#exchange').value,
         product: settingsPanel.querySelector('#product').value,
-        quantity: settingsPanel.querySelector('#quantity').value
+        symbol1: settingsPanel.querySelector('#symbol1').value,
+        quantity1: settingsPanel.querySelector('#quantity1').value,
+        symbol2: settingsPanel.querySelector('#symbol2').value,
+        quantity2: settingsPanel.querySelector('#quantity2').value,
+        enabled2: settingsPanel.querySelector('#enabled2').checked
       };
-      
+
       chrome.storage.sync.set(newSettings, function() {
         showNotification('Settings saved successfully!', 'success');
+        // Update button visibility
+        updateButtonVisibility();
         toggleSettings();
       });
     });
   });
   
   container.appendChild(settingsPanel);
-  
+
+  // Update button visibility based on enabled state on initial load
+  updateButtonVisibility();
+
   // Position the container differently on the OpenAlgo dashboard
   if (isOpenAlgoDashboard) {
     container.style.top = '20px';
@@ -189,6 +242,26 @@ function injectTradingButtons() {
 function toggleSettings() {
   const settingsPanel = document.getElementById('openalgo-settings-panel');
   settingsPanel.classList.toggle('hidden');
+}
+
+// Update button visibility based on enabled state
+function updateButtonVisibility() {
+  chrome.storage.sync.get(['enabled2'], function(settings) {
+    const enabled2 = settings.enabled2 !== undefined ? settings.enabled2 : false;
+
+    // Get all button rows
+    const buttonRows = document.querySelectorAll('.openalgo-buttons-row');
+
+    // Row 1 (Symbol 1) is always visible
+    if (buttonRows.length >= 1) {
+      buttonRows[0].style.display = 'flex';
+    }
+
+    // Row 2 (Symbol 2) visibility controlled by enabled2
+    if (buttonRows.length >= 2) {
+      buttonRows[1].style.display = enabled2 ? 'flex' : 'none';
+    }
+  });
 }
 
 // Make an element draggable
@@ -241,26 +314,57 @@ function makeDraggable(element) {
 }
 
 // Handle button clicks and API calls
-function handleButtonClick(action) {
-  chrome.storage.sync.get(['hostUrl', 'apiKey', 'symbol', 'exchange', 'product', 'quantity'], function(settings) {
-    if (!settings.hostUrl || !settings.apiKey || !settings.symbol || !settings.exchange || !settings.product || !settings.quantity) {
-      showNotification('Error: Please complete all settings first!', 'error');
-      toggleSettings(); // Show settings panel if settings are incomplete
+function handleButtonClick(action, symbolNum) {
+  chrome.storage.sync.get(['hostUrl', 'apiKey', 'exchange', 'product', 'symbol1', 'quantity1', 'symbol2', 'quantity2', 'enabled2'], function(settings) {
+    // Check if symbol 2 is enabled (symbol 1 is always enabled)
+    if (symbolNum === 2) {
+      const enabled2 = settings.enabled2;
+      if (!enabled2) {
+        showNotification('Error: Symbol 2 is disabled!', 'error');
+        return;
+      }
+    }
+
+    // Get symbol-specific settings
+    const symbol = settings[`symbol${symbolNum}`];
+    const quantity = settings[`quantity${symbolNum}`];
+
+    // Validate common settings
+    if (!settings.hostUrl || !settings.apiKey || !settings.exchange || !settings.product) {
+      showNotification('Error: Please complete common settings first!', 'error');
+      toggleSettings();
       return;
     }
-    
+
+    // Validate symbol-specific settings
+    if (!symbol || !quantity) {
+      showNotification(`Error: Please configure Symbol ${symbolNum} settings!`, 'error');
+      toggleSettings();
+      return;
+    }
+
+    // Create settings object with symbol-specific values
+    const tradeSettings = {
+      hostUrl: settings.hostUrl,
+      apiKey: settings.apiKey,
+      exchange: settings.exchange,
+      product: settings.product,
+      symbol: symbol,
+      quantity: quantity
+    };
+
     switch (action) {
       case 'longEntry':
-        placeOrder('BUY', settings);
+        placeOrder('BUY', tradeSettings);
         break;
       case 'longExit':
-        placeSmartOrder('BUY', settings);
+        placeSmartOrder('BUY', tradeSettings);
         break;
       case 'shortEntry':
-        placeOrder('SELL', settings);
+        placeOrder('SELL', tradeSettings);
         break;
       case 'shortExit':
-        placeSmartOrder('SELL', settings);
+        placeSmartOrder('SELL', tradeSettings);
         break;
     }
   });
@@ -396,12 +500,18 @@ function injectStyles() {
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
     
+    .openalgo-buttons-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 2px;
+    }
+
     .openalgo-buttons-row {
       display: flex;
       gap: 2px;
       align-items: center;
-      justify-content: center;
-      padding: 2px;
+      justify-content: flex-start;
     }
     
     .openalgo-drag-handle {
@@ -616,6 +726,54 @@ function injectStyles() {
       margin-bottom: 0.5rem;
       font-weight: 700 !important;
       color: #374151 !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+
+    .openalgo-controls-container .settings-divider {
+      border: 0;
+      border-top: 1px solid #e5e7eb;
+      margin: 12px 0;
+    }
+
+    .openalgo-controls-container .settings-section-title {
+      font-size: 0.7rem !important;
+      font-weight: 600 !important;
+      color: #570df8 !important;
+      margin: 0 0 6px 0;
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+
+    .openalgo-controls-container .symbol-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .openalgo-controls-container .symbol-header .settings-section-title {
+      margin-bottom: 0;
+    }
+
+    .openalgo-controls-container .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      font-size: 0.65rem !important;
+    }
+
+    .openalgo-controls-container .checkbox-input {
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+      accent-color: #570df8;
+    }
+
+    .openalgo-controls-container .checkbox-text {
+      color: #374151 !important;
+      font-weight: 500 !important;
       opacity: 1 !important;
       visibility: visible !important;
     }
