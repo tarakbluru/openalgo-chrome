@@ -148,30 +148,30 @@ function injectTradingButtons() {
             </select>
           </div>
           <hr class="settings-divider">
-          <h4 class="settings-section-title">Symbol 1</h4>
+          <h4 class="settings-section-title">Symbol 1:</h4>
           <div class="form-group">
-            <label for="symbol1">Symbol 1</label>
-            <input type="text" id="symbol1" value="${settings.symbol1 || ''}" class="input input-bordered input-xs" placeholder="Symbol 1">
+            <label for="symbol1">Symbol</label>
+            <input type="text" id="symbol1" value="${settings.symbol1 || ''}" class="input input-bordered input-xs" placeholder="Symbol">
           </div>
           <div class="form-group">
-            <label for="quantity1">Quantity 1</label>
-            <input type="number" id="quantity1" value="${settings.quantity1 || ''}" class="input input-bordered input-xs" placeholder="Quantity 1">
+            <label for="quantity1">Quantity</label>
+            <input type="number" id="quantity1" value="${settings.quantity1 || ''}" class="input input-bordered input-xs" placeholder="Quantity">
           </div>
           <hr class="settings-divider">
           <div class="symbol-header">
-            <h4 class="settings-section-title">Symbol 2</h4>
+            <h4 class="settings-section-title">Symbol 2:</h4>
             <label class="checkbox-label">
               <input type="checkbox" id="enabled2" ${settings.enabled2 ? 'checked' : ''} class="checkbox-input">
               <span class="checkbox-text">Enable</span>
             </label>
           </div>
           <div class="form-group">
-            <label for="symbol2">Symbol 2</label>
-            <input type="text" id="symbol2" value="${settings.symbol2 || ''}" class="input input-bordered input-xs" placeholder="Symbol 2">
+            <label for="symbol2">Symbol</label>
+            <input type="text" id="symbol2" value="${settings.symbol2 || ''}" class="input input-bordered input-xs" placeholder="Symbol">
           </div>
           <div class="form-group">
-            <label for="quantity2">Quantity 2</label>
-            <input type="number" id="quantity2" value="${settings.quantity2 || ''}" class="input input-bordered input-xs" placeholder="Quantity 2">
+            <label for="quantity2">Quantity</label>
+            <input type="number" id="quantity2" value="${settings.quantity2 || ''}" class="input input-bordered input-xs" placeholder="Quantity">
           </div>
           <button id="saveSettings" class="btn btn-primary btn-xs w-full mt-2">Save</button>
         </div>
@@ -764,6 +764,7 @@ function injectStyles() {
       margin: 0 0 6px 0;
       opacity: 1 !important;
       visibility: visible !important;
+      text-decoration: underline;
     }
 
     .openalgo-controls-container .symbol-header {
