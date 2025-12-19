@@ -184,11 +184,27 @@ function injectTradingButtons() {
       input.addEventListener('mousedown', (e) => {
         e.stopPropagation();
       });
-      
+
       input.addEventListener('click', (e) => {
         e.stopPropagation();
       });
     });
+
+    // Add uppercase conversion for symbol inputs
+    const symbol1Input = settingsPanel.querySelector('#symbol1');
+    const symbol2Input = settingsPanel.querySelector('#symbol2');
+
+    if (symbol1Input) {
+      symbol1Input.addEventListener('input', (e) => {
+        e.target.value = e.target.value.toUpperCase();
+      });
+    }
+
+    if (symbol2Input) {
+      symbol2Input.addEventListener('input', (e) => {
+        e.target.value = e.target.value.toUpperCase();
+      });
+    }
     
     // Save settings button handler
     settingsPanel.querySelector('#saveSettings').addEventListener('click', function(e) {
@@ -638,7 +654,7 @@ function injectStyles() {
       visibility: visible !important;
     }
     
-    .openalgo-controls-container .form-group input, 
+    .openalgo-controls-container .form-group input,
     .openalgo-controls-container .form-group select {
       padding: 3px 6px;
       border: 1px solid #d1d5db;
@@ -653,6 +669,11 @@ function injectStyles() {
       color: #333333 !important;
       opacity: 1 !important;
       visibility: visible !important;
+    }
+
+    .openalgo-controls-container #symbol1,
+    .openalgo-controls-container #symbol2 {
+      text-transform: uppercase;
     }
     
     .openalgo-controls-container .form-group input:focus, 
