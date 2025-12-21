@@ -113,8 +113,11 @@ function injectTradingButtons() {
       chrome.storage.sync.set({ symbol1: settings.symbol, quantity1: settings.quantity });
     }
 
-    // Default enabled state for Symbol 2
-    if (settings.enabled2 === undefined) settings.enabled2 = false;
+    // Default enabled state for Symbol 2 - save to storage if not set
+    if (settings.enabled2 === undefined) {
+      settings.enabled2 = false;
+      chrome.storage.sync.set({ enabled2: false });
+    }
 
     settingsPanel.innerHTML = `
       <div class="card-body p-3">
@@ -229,12 +232,12 @@ function injectTradingButtons() {
         toggleSettings();
       });
     });
-  });
-  
-  container.appendChild(settingsPanel);
 
-  // Update button visibility based on enabled state on initial load
-  updateButtonVisibility();
+    // Update button visibility based on enabled state after settings are loaded
+    updateButtonVisibility();
+  });
+
+  container.appendChild(settingsPanel);
 
   // Position the container differently on the OpenAlgo dashboard
   if (isOpenAlgoDashboard) {
